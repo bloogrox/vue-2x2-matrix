@@ -1,5 +1,5 @@
 const Canvas2x2Component = {
-    props: ['modelValue', 'x', 'y', 'width', 'height'],
+    props: ['modelValue', 'x', 'y', 'width', 'height', 'itemKey', 'itemText'],
     // emits: ['update:modelValue'],
     computed: {
         items: {
@@ -32,7 +32,7 @@ const Canvas2x2Component = {
     },
     methods: {
         addItem(item) {
-            const group = this.createNote(item.text)
+            const group = this.createNote(item[this.itemText])
 
             if (item.left && item.top) {
                 group.set("left", item.left);
@@ -44,7 +44,7 @@ const Canvas2x2Component = {
             this.notes.push(group);
 
             /*** Set external id */
-            group.set("ext", {id: item.text});
+            group.set("ext", {id: item[this.itemKey]});
 
             /*** MouseUp Event Listener */
             group.on("mouseup", this._mouseUpListener)
@@ -54,19 +54,13 @@ const Canvas2x2Component = {
         _mouseUpListener(event) {
             const {top, left} = event.currentTarget;
 
-            this.items = this.update_in(this.items,
-                el => el.text == event.currentTarget.ext.id,
-                el => Object.assign({}, el, {left, top})
-            )
-        },
-        update_in(arr, where_fn, apply_fn) {
-            let copy = [...arr];
-            arr.forEach((el, idx) => {
-                if (where_fn(el)) {
-                    copy[idx] = apply_fn(el)
-                }
-            })
-            return copy
+            const payload = {
+                id: event.currentTarget.ext.id, 
+                left, 
+                top
+            };
+
+            this.$emit("move", payload);
         },
         refreshNotes() {
             this.notes.forEach(x => this.canvas.remove(x))
